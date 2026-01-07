@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>家族脈絡系統 - 專業完整版</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        :root {
+            --male-bg: #e3f2fd; --male-border: #2196f3;
+            --female-bg: #fff3e0; --female-border: #ff9800;
+            --deceased-bg: #eeeeee; --deceased-text: #888;
+            --line-color: #999; --card-width: 140px;
+            --heart-color: #ff0000;
+            --divorced-color: #d32f2f;
+        }
+
+        body { font-family: "Microsoft JhengHei", sans-serif; background-color: #f0f2f5; padding: 0; margin: 0; overflow: auto; }
+
+        .title-container { position: fixed; top: 10px; left: 20px; z-index: 2000; }
+        #editable-title { font-size: 28px; font-weight: bold; color: #333; border-bottom: 2px transparent solid; transition: 0.3s; padding: 5px; }
+        #editable-title:hover { background: rgba(0,0,0,0.05); border-bottom: 2px solid #999; }
+
+        #zoom-outer { width: 100%; height: 100vh; overflow: auto; padding: 80px 50px 50px 50px; box-sizing: border-box; }
+        #zoom-inner { transform-origin: top center; transition: transform 0.2s ease-out; display: inline-block; min-width: 100%; }
+
+        /* --- 連線結構 --- */
+        .tree ul { padding-top: 30px; position: relative; display: flex; justify-content: center; margin: 0; padding-inline-start: 0; }
+        .tree ul::before { content: ''; position: absolute; top: 0; left: 50%; border-left: 2px solid var(--line-color); height: 30px; transform: translateX(var(--drag-offset, 0px)); z-index: 1; }
+        .tree > ul::before { display: none !important; }
+        .tree ul:has(> li:only-child)::before { height: 60px; }
+        .tree li { text-align: center; list-style-type: none; position: relative; padding: 30px 5px 0 5px; }
+        .tree li::before, .tree li::after { content: ''; position: absolute; top: 0; right: 50%; border-top: 2px solid var(--line-color); width: 50%; height: 30px; }
+        .tree li::after { right: auto; left: 50%; border-left: 2px solid var(--line-color); }
+        .tree li:only-child::before, .tree li:only-child::after { display: none !important; }
+        .tree li:first-child::before, .tree li:last-child::after { border: 0 none; }
+        .tree li:last-child::before { border-right: 2px solid var(--line-color); border-radius: 0 8px 0 0; }
+        .tree li:first-child::after { border-radius: 8px 0 0 0; }
+
+        .node-container { display: inline-flex; align-items: flex-start; position: relative; gap: 35px; }
+        .spouse-list { display: flex; gap: 35px; position: relative; }
+        .spouse-item { position: relative; }
+        .spouse-item::before { content: "♥"; position: absolute; top: 10px; left: -32px; color: var(--heart-color); z-index: 11; font-size: 28px; }
+        .spouse-item::after { content: ""; position: absolute; top: 24px; left: -35px; width: 35px; height: 4px; border-top: 1px solid var(--heart-color); border-bottom: 1px solid var(--heart-color); z-index: 5; }
+        .divorced::before { content: "×" !important; color: var(--divorced-color) !important; font-size: 32px !important; font-weight: bold !important; top: 2px !important; left: -32px !important; }
+        .divorced::after { border-top: 3px dashed var(--divorced-color) !important; border-bottom: none !important; height: 0 !important; top: 24px !important; }
+
+        .member-card { width: var(--card-width); padding: 10px; border-radius: 8px; border: 2px solid #ccc; box-shadow: 0 3px 6px rgba(0,0,0,0.1); background: white; cursor: grab; position: relative; z-index: 10; }
+        .male { background-color: var(--male-bg); border-color: var(--male-border); }
+        .female { background-color: var(--female-bg); border-color: var(--female-border); }
+        .deceased { background-color: var(--deceased-bg) !important; color: var(--deceased-text) !important; border-color: #999 !important; }
+        .deceased .name-row::after { content: " (歿)"; font-size: 11px; }
+        .name-row { font-weight: bold; font-size: 15px; margin: 4px 0 10px 0; display: block; }
+        
+        .card-actions { display: flex; justify-content: space-between; gap: 3px; margin-top: 5px; }
+        .btn-sm { flex: 1; font-size: 11px; cursor: pointer; border: 1px solid #ccc; background: #fff; padding: 4px 0; border-radius: 4px; font-weight: bold; color: #333; text-align: center; }
+        .btn-sm:hover { background: #f0f0f0; }
+        .btn-direct { background-color: #e91e63 !important; color: white !important; border-color: #c2185b !important; }
+        .not-direct-line { display: none !important; }
+
+        .admin-controls { position: fixed; top: 20px; right: 20px; z-index: 2000; display: flex; flex-direction: column; gap: 10px; align-items: flex-end; }
+        .control-group { display: flex; gap: 10px; }
+        .control-btn { padding: 10px 18px; border: none; border-radius: 5px; color: white; cursor: pointer; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        
+        .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; }
+        #modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 25px; border-radius: 12px; width: 480px; z-index: 1001; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        
+        .inline-row { display: flex; gap: 10px; align-items: center; margin-bottom: 12px; }
+        .inline-row input[type="text"] { flex: 2; }
+        .inline-row select { flex: 1; }
+        .dead-check { display: flex; align-items: center; gap: 4px; color: red; font-weight: bold; white-space: nowrap; cursor: pointer; }
+        .input-group { margin-bottom: 10px; }
+        .input-group label { display: block; font-size: 13px; margin-bottom: 3px; font-weight: bold; color: #555; }
+        input[type="text"], input[type="date"], input[type="email"], select { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+        textarea { width: 100%; height: 60px; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; resize: vertical; }
+        .spouse-box { background: #f8f9fa; padding: 12px; margin-top: 10px; border-radius: 8px; border-left: 4px solid #673ab7; position: relative; }
+
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white; }
+            #zoom-outer { overflow: visible; padding: 0; }
+            #zoom-inner { transform: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="title-container no-print">
+        <div id="editable-title" contenteditable="true" onblur="saveTitle()">家族脈絡系統</div>
+    </div>
+
+    <div class="admin-controls no-print">
+        <div class="control-group">
+            <button class="control-btn" style="background:#555;" onclick="changeZoom(-0.1)">➖ 縮小</button>
+            <button class="control-btn" style="background:#555;" onclick="setZoom(1)">100%</button>
+            <button class="control-btn" style="background:#555;" onclick="changeZoom(0.1)">➕ 放大</button>
+        </div>
+        <div class="control-group">
+            <button class="control-btn" style="background:#2196f3; display:none;" onclick="resetFilter()" id="reset-btn">顯示全圖</button>
+            <button class="control-btn" style="background:#4caf50;" onclick="manualSave()">💾 儲存資料</button>
+            <button class="control-btn" style="background:#e67e22;" onclick="exportJPG()">📸 輸出完整 JPG</button>
+            <button class="control-btn" style="background:#607d8b;" onclick="window.print()">🖨️ 列印圖表</button>
+        </div>
+    </div>
+
+    <div id="zoom-outer">
+        <div id="zoom-inner">
+            <div class="tree" id="tree-container"></div>
+        </div>
+    </div>
+
+    <div class="overlay" id="overlay" onclick="closeModal()"></div>
+    <div id="modal">
+        <h3 id="modal-title" style="margin-top:0;">編輯資料</h3>
+        <div class="inline-row">
+            <input type="text" id="i-name" placeholder="姓名">
+            <select id="i-gender"><option value="male">男性</option><option value="female">女性</option></select>
+            <label class="dead-check"><input type="checkbox" id="i-is-dead"> 歿</label>
+        </div>
+        <div class="input-group"><label>生日：</label><input type="date" id="i-birth"></div>
+        <div class="input-group"><label>電話：</label><input type="text" id="i-phone"></div>
+        <div class="input-group"><label>Email：</label><input type="email" id="i-email"></div>
+        <div class="input-group"><label>住址：</label><input type="text" id="i-address"></div>
+        <div class="input-group"><label>備註：</label><textarea id="i-memo"></textarea></div>
+        <div id="spouse-area" style="margin-top:20px; border-top: 2px solid #eee; padding-top: 15px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <strong>配偶資訊</strong>
+                <button onclick="handleAddSpouseClick()" style="background:#673ab7; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">+ 增加配偶</button>
+            </div>
+        </div>
+        <hr style="margin:20px 0;">
+        <div style="display: flex; gap: 10px;">
+            <button onclick="deleteMember()" id="del-btn" style="flex:1; background:#f44336; color:white; border:none; padding:12px; border-radius:6px; cursor:pointer; font-weight:bold;">❌ 刪除</button>
+            <button onclick="saveData()" style="flex:2; background:#2196f3; color:white; border:none; padding:12px; border-radius:6px; cursor:pointer; font-weight:bold;">💾 儲存變更</button>
+        </div>
+    </div>
+
+    <script>
+        // --- JPG 完整輸出邏輯 ---
+        async function exportJPG() {
+            const target = document.getElementById('zoom-inner');
+            const originalTransform = target.style.transform;
+            
+            // 1. 關鍵：暫時清除縮放，確保計算的是內容原始完整尺寸
+            target.style.transform = "none";
+            
+            // 2. 等待一小段時間讓瀏覽器重新計算佈局
+            await new Promise(r => setTimeout(r, 100));
+
+            // 3. 獲取內容的真實邊界範圍
+            const rect = target.getBoundingClientRect();
+            const width = target.scrollWidth;
+            const height = target.scrollHeight;
+
+            try {
+                const canvas = await html2canvas(target, {
+                    backgroundColor: "#f0f2f5",
+                    useCORS: true,
+                    scale: 2,           // 高解析度
+                    width: width,       // 指定完整寬度
+                    height: height,     // 指定完整高度
+                    x: 0,
+                    y: 0,
+                    scrollX: 0,
+                    scrollY: 0,
+                    windowWidth: width, // 模擬寬屏環境
+                    windowHeight: height,
+                    ignoreElements: (el) => el.classList.contains('no-print')
+                });
+
+                const link = document.createElement('a');
+                link.download = `${document.getElementById('editable-title').innerText}.jpg`;
+                link.href = canvas.toDataURL("image/jpeg", 0.9);
+                link.click();
+            } catch (err) {
+                console.error(err);
+                alert("輸出失敗，族譜範圍可能過大。");
+            } finally {
+                target.style.transform = originalTransform;
+            }
+        }
+
+        // --- 核心功能邏輯 (維持原樣) ---
+        let currentZoom = 1;
+        function changeZoom(delta) { currentZoom = Math.max(0.2, Math.min(2, currentZoom + delta)); applyZoom(); }
+        function setZoom(val) { currentZoom = val; applyZoom(); }
+        function applyZoom() { document.getElementById('zoom-inner').style.transform = `scale(${currentZoom})`; }
+        function saveTitle() { localStorage.setItem('FamilyTree_Title', document.getElementById('editable-title').innerText); }
+
+        const DB_KEY = 'FamilyTree_Final_DB_V2';
+        let familyData = JSON.parse(localStorage.getItem(DB_KEY)) || {
+            id: 'r1', name: "王氏始祖", gender: "male", birthday: "", isDead: false, phone: "", email: "", address: "", memo: "", spouses: [], children: []
+        };
+        let activeId = null, isEditMode = false;
+
+        function render() {
+            document.getElementById('tree-container').innerHTML = `<ul>${genHtml(familyData)}</ul>`;
+            initDragEvents();
+        }
+
+        function genHtml(m) {
+            const hasSpouse = m.spouses && m.spouses.length > 0;
+            const deadClass = m.isDead ? 'deceased' : '';
+            const offsetStyle = hasSpouse ? `style="--drag-offset: calc( (var(--card-width) / -2) - 17.5px );"` : `style="--drag-offset: 0px;"`;
+            let spouseHtml = (m.spouses || []).map(s => `
+                <div class="spouse-item ${s.isDivorced ? 'divorced' : ''}">
+                    <div class="member-card ${s.gender} ${s.isDead ? 'deceased' : ''}">
+                        <span class="name-row">${s.name}</span>
+                    </div>
+                </div>`).join('');
+            return `<li id="li-${m.id}" data-node-id="${m.id}">
+                <div class="node-container">
+                    <div class="member-card ${m.gender} ${deadClass}" draggable="true" data-id="${m.id}">
+                        <span class="name-row">${m.name}</span>
+                        <div class="card-actions no-print">
+                            <div class="btn-sm" onclick="openModal(event, '${m.id}', true)">編輯</div>
+                            <div class="btn-sm" onclick="openModal(event, '${m.id}', false)">子女</div>
+                            <div class="btn-sm btn-direct" onclick="toggleDirectMode('${m.id}')">直系</div>
+                        </div>
+                    </div>${hasSpouse ? `<div class="spouse-list">${spouseHtml}</div>` : ''}
+                </div>${m.children && m.children.length > 0 ? `<ul ${offsetStyle}>${m.children.map(c => genHtml(c)).join('')}</ul>` : ''}</li>`;
+        }
+
+        function toggleDirectMode(id) {
+            document.getElementById('reset-btn').style.display = 'block';
+            const directIds = new Set();
+            let cur = id;
+            while(cur) { directIds.add(cur); const p = findParent(familyData, cur); cur = p?p.id:null; }
+            const focus = find(familyData, id);
+            function collect(n) { directIds.add(n.id); (n.children||[]).forEach(collect); }
+            collect(focus);
+            document.querySelectorAll('.tree li').forEach(li => li.classList.toggle('not-direct-line', !directIds.has(li.dataset.nodeId)));
+        }
+
+        function resetFilter() { document.getElementById('reset-btn').style.display = 'none'; document.querySelectorAll('.not-direct-line').forEach(el => el.classList.remove('not-direct-line')); }
+        function handleAddSpouseClick() { const g = document.getElementById('i-gender').value === 'male' ? 'female' : 'male'; addSpouseInput({ name: '', gender: g, isDead: false, isDivorced: false }); }
+
+        function addSpouseInput(s) {
+            const div = document.createElement('div');
+            div.className = "spouse-box";
+            div.innerHTML = `
+                <button onclick="this.parentElement.remove()" style="position:absolute; right:8px; top:8px; border:none; background:none; color:red; cursor:pointer; font-weight:bold;">✕</button>
+                <div class="inline-row" style="margin-top:10px;">
+                    <input type="text" class="sp-n" placeholder="配偶姓名" value="${s.name}">
+                    <select class="sp-g"><option value="female" ${s.gender==='female'?'selected':''}>女</option><option value="male" ${s.gender==='male'?'selected':''}>男</option></select>
+                    <label class="dead-check"><input type="checkbox" class="sp-d" ${s.isDead?'checked':''}> 歿</label>
+                </div>
+                <div style="margin-bottom:8px;"><label style="font-size:12px; color:#666;"><input type="checkbox" class="sp-div" ${s.isDivorced?'checked':''}> 離婚</label></div>
+                <div class="input-group"><label style="font-size:11px;">生日：</label><input type="date" class="sp-b" value="${s.birthday||''}"></div>
+                <div class="input-group"><label style="font-size:11px;">電話：</label><input type="text" class="sp-p" value="${s.phone||''}"></div>
+                <div class="input-group"><label style="font-size:11px;">住址：</label><input type="text" class="sp-a" value="${s.address||''}"></div>`;
+            document.getElementById('spouse-area').appendChild(div);
+        }
+
+        function openModal(e, id, edit) {
+            e.stopPropagation(); activeId = id; isEditMode = edit;
+            const m = find(familyData, id);
+            document.getElementById('modal-title').innerText = edit ? `編輯：${m.name}` : `為 ${m.name} 新增後代`;
+            document.getElementById('del-btn').style.display = (id === 'r1') ? 'none' : 'block';
+            document.getElementById('spouse-area').innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center;"><strong>配偶資訊</strong><button onclick="handleAddSpouseClick()" style="background:#673ab7; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">+ 增加配偶</button></div>`;
+            if(edit) {
+                document.getElementById('i-name').value = m.name; document.getElementById('i-gender').value = m.gender;
+                document.getElementById('i-birth').value = m.birthday||""; document.getElementById('i-phone').value = m.phone||"";
+                document.getElementById('i-email').value = m.email||""; document.getElementById('i-address').value = m.address||"";
+                document.getElementById('i-memo').value = m.memo||"";
+                document.getElementById('i-is-dead').checked = m.isDead;
+                (m.spouses || []).forEach(addSpouseInput);
+            } else { ['i-name','i-birth','i-phone','i-email','i-address','i-memo'].forEach(v=>document.getElementById(v).value=""); document.getElementById('i-is-dead').checked = false; }
+            document.getElementById('overlay').style.display = 'block'; document.getElementById('modal').style.display = 'block';
+        }
+
+        function saveData() {
+            const data = {
+                name: document.getElementById('i-name').value, gender: document.getElementById('i-gender').value,
+                birthday: document.getElementById('i-birth').value, phone: document.getElementById('i-phone').value,
+                email: document.getElementById('i-email').value, address: document.getElementById('i-address').value,
+                memo: document.getElementById('i-memo').value, isDead: document.getElementById('i-is-dead').checked,
+                spouses: Array.from(document.querySelectorAll('.spouse-box')).map(row => ({
+                    name: row.querySelector('.sp-n').value, gender: row.querySelector('.sp-g').value,
+                    isDead: row.querySelector('.sp-d').checked, isDivorced: row.querySelector('.sp-div').checked,
+                    birthday: row.querySelector('.sp-b').value, phone: row.querySelector('.sp-p').value, address: row.querySelector('.sp-a').value
+                })).filter(s => s.name)
+            };
+            if (isEditMode) Object.assign(find(familyData, activeId), data);
+            else find(familyData, activeId).children.push({ id: 'id_'+Date.now(), ...data, children: [] });
+            save(); closeModal();
+        }
+
+        function initDragEvents() { 
+            document.querySelectorAll('.member-card[draggable="true"]').forEach(card => {
+                card.ondragstart = (e) => e.dataTransfer.setData("text", card.dataset.id);
+                card.ondragover = (e) => e.preventDefault();
+                card.ondrop = (e) => {
+                    e.preventDefault();
+                    const sId = e.dataTransfer.getData("text"), tId = card.dataset.id;
+                    if (sId && sId !== tId && sId !== 'r1') {
+                        const sP = findParent(familyData, sId), tP = findParent(familyData, tId);
+                        if (sP && tP && sP.id === tP.id) {
+                            const c = sP.children, sIdx = c.findIndex(x => x.id === sId), tIdx = c.findIndex(x => x.id === tId);
+                            const [item] = c.splice(sIdx, 1); c.splice(tIdx, 0, item);
+                        } else { const mov = findAndRemove(familyData, sId), tar = find(familyData, tId); if(mov && tar) tar.children.push(mov); }
+                        save();
+                    }
+                };
+            });
+        }
+
+        function find(n, id) { if (n.id === id) return n; for (let c of (n.children || [])) { const r = find(c, id); if (r) return r; } return null; }
+        function findParent(root, childId) { if (!root.children) return null; if (root.children.some(c => c.id === childId)) return root; for (let c of root.children) { const p = findParent(c, childId); if (p) return p; } return null; }
+        function findAndRemove(root, id) { const idx = (root.children || []).findIndex(c => c.id === id); if (idx !== -1) return root.children.splice(idx, 1)[0]; for (let c of (root.children || [])) { const r = findAndRemove(c, id); if (r) return r; } return null; }
+        function save() { localStorage.setItem(DB_KEY, JSON.stringify(familyData)); render(); }
+        function manualSave() { save(); alert("資料已成功儲存！"); }
+        function closeModal() { document.getElementById('overlay').style.display = 'none'; document.getElementById('modal').style.display = 'none'; }
+        function deleteMember() { if(confirm("確定刪除此成員及其所有子孫？")) { findAndRemove(familyData, activeId); save(); closeModal(); } }
+
+        const savedTitle = localStorage.getItem('FamilyTree_Title');
+        if (savedTitle) document.getElementById('editable-title').innerText = savedTitle;
+        render();
+    </script>
+</body>
+</html>
