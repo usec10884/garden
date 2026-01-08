@@ -15,16 +15,10 @@
             --divorced-color: #d32f2f;
         }
 
-        body { 
-            font-family: "Microsoft JhengHei", sans-serif; 
-            background-color: #f0f2f5; 
-            padding: 0; margin: 0; 
-            overflow: auto;
-            touch-action: manipulation; /* 優化手機點擊反應 */
-        }
+        body { font-family: "Microsoft JhengHei", sans-serif; background-color: #f0f2f5; padding: 0; margin: 0; overflow: auto; }
 
         .title-container { position: fixed; top: 10px; left: 20px; z-index: 2000; }
-        #editable-title { font-size: 28px; font-weight: bold; color: #333; border-bottom: 2px transparent solid; transition: 0.3s; padding: 5px; background: rgba(240,242,245,0.6); border-radius: 5px; }
+        #editable-title { font-size: 28px; font-weight: bold; color: #333; border-bottom: 2px transparent solid; transition: 0.3s; padding: 5px; }
         #editable-title:hover { background: rgba(0,0,0,0.05); border-bottom: 2px solid #999; }
 
         #zoom-outer { width: 100%; height: 100vh; overflow: auto; padding: 80px 50px 50px 50px; box-sizing: border-box; }
@@ -56,10 +50,10 @@
         .female { background-color: var(--female-bg); border-color: var(--female-border); }
         .deceased { background-color: var(--deceased-bg) !important; color: var(--deceased-text) !important; border-color: #999 !important; }
         .deceased .name-row::after { content: " (歿)"; font-size: 11px; }
-        .name-row { font-weight: bold; font-size: 16px; margin: 4px 0 10px 0; display: block; } /* 稍微加大字體 */
+        .name-row { font-weight: bold; font-size: 15px; margin: 4px 0 10px 0; display: block; }
         
         .card-actions { display: flex; justify-content: space-between; gap: 3px; margin-top: 5px; }
-        .btn-sm { flex: 1; font-size: 12px; cursor: pointer; border: 1px solid #ccc; background: #fff; padding: 6px 0; border-radius: 4px; font-weight: bold; color: #333; text-align: center; }
+        .btn-sm { flex: 1; font-size: 11px; cursor: pointer; border: 1px solid #ccc; background: #fff; padding: 4px 0; border-radius: 4px; font-weight: bold; color: #333; text-align: center; }
         .btn-sm:hover { background: #f0f0f0; }
         .btn-direct { background-color: #e91e63 !important; color: white !important; border-color: #c2185b !important; }
         .not-direct-line { display: none !important; }
@@ -69,36 +63,51 @@
         .control-btn { padding: 10px 18px; border: none; border-radius: 5px; color: white; cursor: pointer; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         
         .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; }
-        #modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 480px; z-index: 1001; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        
+        /* --- 修正後的彈窗樣式 --- */
+        #modal { 
+            display: none; 
+            position: fixed; 
+            top: 50%; 
+            left: 50%; 
+            transform: translate(-50%, -50%); 
+            background: white; 
+            padding: 20px; 
+            border-radius: 12px; 
+            width: 90%;          /* 手機版佔寬 90% */
+            max-width: 480px;    /* 最大寬度不變 */
+            z-index: 1001; 
+            max-height: 85vh;    /* 限制最高為螢幕高度的 85% */
+            overflow-y: auto;    /* 內容過多時顯示垂直滾動條 */
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            -webkit-overflow-scrolling: touch; /* 優化 iOS 滑動順暢度 */
+        }
         
         .inline-row { display: flex; gap: 10px; align-items: center; margin-bottom: 12px; }
         .inline-row input[type="text"] { flex: 2; }
         .inline-row select { flex: 1; }
         .dead-check { display: flex; align-items: center; gap: 4px; color: red; font-weight: bold; white-space: nowrap; cursor: pointer; }
         .input-group { margin-bottom: 10px; }
-        .input-group label { display: block; font-size: 14px; margin-bottom: 3px; font-weight: bold; color: #555; }
+        .input-group label { display: block; font-size: 13px; margin-bottom: 3px; font-weight: bold; color: #555; }
         
-        /* 防止 iOS 點擊輸入框時自動縮放，字體至少要 16px */
-        input[type="text"], input[type="date"], input[type="email"], input[type="tel"], select, textarea { 
-            width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; font-size: 16px !important; 
+        /* 增加手機點擊易用性，字體設定 16px 防止 iOS 縮放 */
+        input[type="text"], input[type="date"], input[type="email"], select, textarea { 
+            width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; font-size: 16px; 
         }
         
-        textarea { height: 80px; resize: vertical; }
+        textarea { height: 60px; resize: vertical; }
         .spouse-box { background: #f8f9fa; padding: 12px; margin-top: 10px; border-radius: 8px; border-left: 4px solid #673ab7; position: relative; }
-
-        /* 手機版額外修正 */
-        @media screen and (max-width: 600px) {
-            .admin-controls { top: auto; bottom: 20px; right: 10px; left: 10px; flex-direction: row; justify-content: center; background: rgba(255,255,255,0.8); padding: 10px; border-radius: 10px; }
-            .control-btn { padding: 8px 12px; font-size: 12px; }
-            #editable-title { font-size: 20px; }
-            #zoom-outer { padding: 60px 20px 100px 20px; }
-        }
 
         @media print {
             .no-print { display: none !important; }
             body { background: white; }
             #zoom-outer { overflow: visible; padding: 0; }
             #zoom-inner { transform: none !important; }
+        }
+
+        /* 手機控制按鈕位置調整，避免擋到上方標題 */
+        @media screen and (max-width: 600px) {
+            .admin-controls { right: 10px; top: 60px; scale: 0.9; transform-origin: top right; }
         }
     </style>
 </head>
@@ -110,15 +119,14 @@
 
     <div class="admin-controls no-print">
         <div class="control-group">
-            <button class="control-btn" style="background:#555;" onclick="changeZoom(-0.1)">➖ 縮小</button>
+            <button class="control-btn" style="background:#555;" onclick="changeZoom(-0.1)">➖</button>
             <button class="control-btn" style="background:#555;" onclick="setZoom(1)">100%</button>
-            <button class="control-btn" style="background:#555;" onclick="changeZoom(0.1)">➕ 放大</button>
+            <button class="control-btn" style="background:#555;" onclick="changeZoom(0.1)">➕</button>
         </div>
         <div class="control-group">
-            <button class="control-btn" style="background:#2196f3; display:none;" onclick="resetFilter()" id="reset-btn">顯示全圖</button>
+            <button class="control-btn" style="background:#2196f3; display:none;" onclick="resetFilter()" id="reset-btn">全圖</button>
             <button class="control-btn" style="background:#4caf50;" onclick="manualSave()">💾 儲存</button>
             <button class="control-btn" style="background:#e67e22;" onclick="exportJPG()">📸 輸出</button>
-            <button class="control-btn" style="background:#607d8b;" onclick="window.print()">🖨️ 列印</button>
         </div>
     </div>
 
@@ -144,18 +152,17 @@
         <div id="spouse-area" style="margin-top:20px; border-top: 2px solid #eee; padding-top: 15px;">
             <div style="display:flex; justify-content:space-between; align-items:center;">
                 <strong>配偶資訊</strong>
-                <button onclick="handleAddSpouseClick()" style="background:#673ab7; color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer; font-weight:bold;">+ 增加配偶</button>
+                <button onclick="handleAddSpouseClick()" style="background:#673ab7; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">+ 增加配偶</button>
             </div>
         </div>
-        <hr style="margin:20px 0;">
-        <div style="display: flex; gap: 10px;">
+        <div style="display: flex; gap: 10px; margin-top: 25px; padding-bottom: 10px;">
             <button onclick="deleteMember()" id="del-btn" style="flex:1; background:#f44336; color:white; border:none; padding:12px; border-radius:6px; cursor:pointer; font-weight:bold;">❌ 刪除</button>
             <button onclick="saveData()" style="flex:2; background:#2196f3; color:white; border:none; padding:12px; border-radius:6px; cursor:pointer; font-weight:bold;">💾 儲存變更</button>
         </div>
     </div>
 
     <script>
-        // --- 完全保留原始邏輯 ---
+        // --- 原始邏輯保持不變 ---
         async function exportJPG() {
             const target = document.getElementById('zoom-inner');
             const originalTransform = target.style.transform;
@@ -163,6 +170,7 @@
             await new Promise(r => setTimeout(r, 100));
             const width = target.scrollWidth;
             const height = target.scrollHeight;
+
             try {
                 const canvas = await html2canvas(target, {
                     backgroundColor: "#f0f2f5",
@@ -175,6 +183,7 @@
                     windowHeight: height,
                     ignoreElements: (el) => el.classList.contains('no-print')
                 });
+
                 const link = document.createElement('a');
                 link.download = `${document.getElementById('editable-title').innerText}.jpg`;
                 link.href = canvas.toDataURL("image/jpeg", 0.9);
@@ -261,9 +270,9 @@
         function openModal(e, id, edit) {
             e.stopPropagation(); activeId = id; isEditMode = edit;
             const m = find(familyData, id);
-            document.getElementById('modal-title').innerText = edit ? `編輯：${m.name}` : `為 ${m.name} 新增後代`;
+            document.getElementById('modal-title').innerText = edit ? `編輯：${m.name}` : `新增 ${m.name} 子女`;
             document.getElementById('del-btn').style.display = (id === 'r1') ? 'none' : 'block';
-            document.getElementById('spouse-area').innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center;"><strong>配偶資訊</strong><button onclick="handleAddSpouseClick()" style="background:#673ab7; color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer; font-weight:bold;">+ 增加配偶</button></div>`;
+            document.getElementById('spouse-area').innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center;"><strong>配偶資訊</strong><button onclick="handleAddSpouseClick()" style="background:#673ab7; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">+ 增加配偶</button></div>`;
             if(edit) {
                 document.getElementById('i-name').value = m.name; document.getElementById('i-gender').value = m.gender;
                 document.getElementById('i-birth').value = m.birthday||""; document.getElementById('i-phone').value = m.phone||"";
@@ -273,6 +282,7 @@
                 (m.spouses || []).forEach(addSpouseInput);
             } else { ['i-name','i-birth','i-phone','i-email','i-address','i-memo'].forEach(v=>document.getElementById(v).value=""); document.getElementById('i-is-dead').checked = false; }
             document.getElementById('overlay').style.display = 'block'; document.getElementById('modal').style.display = 'block';
+            document.getElementById('modal').scrollTop = 0; // 開啟時回到最上方
         }
 
         function saveData() {
