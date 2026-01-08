@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>家族脈絡系統 - 專業完整版</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
@@ -15,10 +15,16 @@
             --divorced-color: #d32f2f;
         }
 
-        body { font-family: "Microsoft JhengHei", sans-serif; background-color: #f0f2f5; padding: 0; margin: 0; overflow: auto; }
+        body { 
+            font-family: "Microsoft JhengHei", sans-serif; 
+            background-color: #f0f2f5; 
+            padding: 0; margin: 0; 
+            overflow: auto;
+            touch-action: manipulation; /* 優化手機點擊反應 */
+        }
 
         .title-container { position: fixed; top: 10px; left: 20px; z-index: 2000; }
-        #editable-title { font-size: 28px; font-weight: bold; color: #333; border-bottom: 2px transparent solid; transition: 0.3s; padding: 5px; }
+        #editable-title { font-size: 28px; font-weight: bold; color: #333; border-bottom: 2px transparent solid; transition: 0.3s; padding: 5px; background: rgba(240,242,245,0.6); border-radius: 5px; }
         #editable-title:hover { background: rgba(0,0,0,0.05); border-bottom: 2px solid #999; }
 
         #zoom-outer { width: 100%; height: 100vh; overflow: auto; padding: 80px 50px 50px 50px; box-sizing: border-box; }
@@ -50,10 +56,10 @@
         .female { background-color: var(--female-bg); border-color: var(--female-border); }
         .deceased { background-color: var(--deceased-bg) !important; color: var(--deceased-text) !important; border-color: #999 !important; }
         .deceased .name-row::after { content: " (歿)"; font-size: 11px; }
-        .name-row { font-weight: bold; font-size: 15px; margin: 4px 0 10px 0; display: block; }
+        .name-row { font-weight: bold; font-size: 16px; margin: 4px 0 10px 0; display: block; } /* 稍微加大字體 */
         
         .card-actions { display: flex; justify-content: space-between; gap: 3px; margin-top: 5px; }
-        .btn-sm { flex: 1; font-size: 11px; cursor: pointer; border: 1px solid #ccc; background: #fff; padding: 4px 0; border-radius: 4px; font-weight: bold; color: #333; text-align: center; }
+        .btn-sm { flex: 1; font-size: 12px; cursor: pointer; border: 1px solid #ccc; background: #fff; padding: 6px 0; border-radius: 4px; font-weight: bold; color: #333; text-align: center; }
         .btn-sm:hover { background: #f0f0f0; }
         .btn-direct { background-color: #e91e63 !important; color: white !important; border-color: #c2185b !important; }
         .not-direct-line { display: none !important; }
@@ -63,17 +69,30 @@
         .control-btn { padding: 10px 18px; border: none; border-radius: 5px; color: white; cursor: pointer; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         
         .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; }
-        #modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 25px; border-radius: 12px; width: 480px; z-index: 1001; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        #modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 480px; z-index: 1001; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
         
         .inline-row { display: flex; gap: 10px; align-items: center; margin-bottom: 12px; }
         .inline-row input[type="text"] { flex: 2; }
         .inline-row select { flex: 1; }
         .dead-check { display: flex; align-items: center; gap: 4px; color: red; font-weight: bold; white-space: nowrap; cursor: pointer; }
         .input-group { margin-bottom: 10px; }
-        .input-group label { display: block; font-size: 13px; margin-bottom: 3px; font-weight: bold; color: #555; }
-        input[type="text"], input[type="date"], input[type="email"], select { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
-        textarea { width: 100%; height: 60px; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; resize: vertical; }
+        .input-group label { display: block; font-size: 14px; margin-bottom: 3px; font-weight: bold; color: #555; }
+        
+        /* 防止 iOS 點擊輸入框時自動縮放，字體至少要 16px */
+        input[type="text"], input[type="date"], input[type="email"], input[type="tel"], select, textarea { 
+            width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; font-size: 16px !important; 
+        }
+        
+        textarea { height: 80px; resize: vertical; }
         .spouse-box { background: #f8f9fa; padding: 12px; margin-top: 10px; border-radius: 8px; border-left: 4px solid #673ab7; position: relative; }
+
+        /* 手機版額外修正 */
+        @media screen and (max-width: 600px) {
+            .admin-controls { top: auto; bottom: 20px; right: 10px; left: 10px; flex-direction: row; justify-content: center; background: rgba(255,255,255,0.8); padding: 10px; border-radius: 10px; }
+            .control-btn { padding: 8px 12px; font-size: 12px; }
+            #editable-title { font-size: 20px; }
+            #zoom-outer { padding: 60px 20px 100px 20px; }
+        }
 
         @media print {
             .no-print { display: none !important; }
@@ -97,9 +116,9 @@
         </div>
         <div class="control-group">
             <button class="control-btn" style="background:#2196f3; display:none;" onclick="resetFilter()" id="reset-btn">顯示全圖</button>
-            <button class="control-btn" style="background:#4caf50;" onclick="manualSave()">💾 儲存資料</button>
-            <button class="control-btn" style="background:#e67e22;" onclick="exportJPG()">📸 輸出完整 JPG</button>
-            <button class="control-btn" style="background:#607d8b;" onclick="window.print()">🖨️ 列印圖表</button>
+            <button class="control-btn" style="background:#4caf50;" onclick="manualSave()">💾 儲存</button>
+            <button class="control-btn" style="background:#e67e22;" onclick="exportJPG()">📸 輸出</button>
+            <button class="control-btn" style="background:#607d8b;" onclick="window.print()">🖨️ 列印</button>
         </div>
     </div>
 
@@ -125,7 +144,7 @@
         <div id="spouse-area" style="margin-top:20px; border-top: 2px solid #eee; padding-top: 15px;">
             <div style="display:flex; justify-content:space-between; align-items:center;">
                 <strong>配偶資訊</strong>
-                <button onclick="handleAddSpouseClick()" style="background:#673ab7; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">+ 增加配偶</button>
+                <button onclick="handleAddSpouseClick()" style="background:#673ab7; color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer; font-weight:bold;">+ 增加配偶</button>
             </div>
         </div>
         <hr style="margin:20px 0;">
@@ -136,51 +155,38 @@
     </div>
 
     <script>
-        // --- JPG 完整輸出邏輯 ---
+        // --- 完全保留原始邏輯 ---
         async function exportJPG() {
             const target = document.getElementById('zoom-inner');
             const originalTransform = target.style.transform;
-            
-            // 1. 關鍵：暫時清除縮放，確保計算的是內容原始完整尺寸
             target.style.transform = "none";
-            
-            // 2. 等待一小段時間讓瀏覽器重新計算佈局
             await new Promise(r => setTimeout(r, 100));
-
-            // 3. 獲取內容的真實邊界範圍
-            const rect = target.getBoundingClientRect();
             const width = target.scrollWidth;
             const height = target.scrollHeight;
-
             try {
                 const canvas = await html2canvas(target, {
                     backgroundColor: "#f0f2f5",
                     useCORS: true,
-                    scale: 2,           // 高解析度
-                    width: width,       // 指定完整寬度
-                    height: height,     // 指定完整高度
-                    x: 0,
-                    y: 0,
-                    scrollX: 0,
-                    scrollY: 0,
-                    windowWidth: width, // 模擬寬屏環境
+                    scale: 2,
+                    width: width,
+                    height: height,
+                    x: 0, y: 0, scrollX: 0, scrollY: 0,
+                    windowWidth: width,
                     windowHeight: height,
                     ignoreElements: (el) => el.classList.contains('no-print')
                 });
-
                 const link = document.createElement('a');
                 link.download = `${document.getElementById('editable-title').innerText}.jpg`;
                 link.href = canvas.toDataURL("image/jpeg", 0.9);
                 link.click();
             } catch (err) {
                 console.error(err);
-                alert("輸出失敗，族譜範圍可能過大。");
+                alert("輸出失敗");
             } finally {
                 target.style.transform = originalTransform;
             }
         }
 
-        // --- 核心功能邏輯 (維持原樣) ---
         let currentZoom = 1;
         function changeZoom(delta) { currentZoom = Math.max(0.2, Math.min(2, currentZoom + delta)); applyZoom(); }
         function setZoom(val) { currentZoom = val; applyZoom(); }
@@ -257,7 +263,7 @@
             const m = find(familyData, id);
             document.getElementById('modal-title').innerText = edit ? `編輯：${m.name}` : `為 ${m.name} 新增後代`;
             document.getElementById('del-btn').style.display = (id === 'r1') ? 'none' : 'block';
-            document.getElementById('spouse-area').innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center;"><strong>配偶資訊</strong><button onclick="handleAddSpouseClick()" style="background:#673ab7; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">+ 增加配偶</button></div>`;
+            document.getElementById('spouse-area').innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center;"><strong>配偶資訊</strong><button onclick="handleAddSpouseClick()" style="background:#673ab7; color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer; font-weight:bold;">+ 增加配偶</button></div>`;
             if(edit) {
                 document.getElementById('i-name').value = m.name; document.getElementById('i-gender').value = m.gender;
                 document.getElementById('i-birth').value = m.birthday||""; document.getElementById('i-phone').value = m.phone||"";
