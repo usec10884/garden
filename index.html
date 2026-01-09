@@ -16,12 +16,12 @@
 
         body { font-family: "Microsoft JhengHei", sans-serif; background-color: #f0f2f5; padding: 0; margin: 0; overflow: auto; }
 
-        /* 標題靠左並可編輯 */
+        /* 標題縮小 1/2 (28px -> 14px) */
         .title-container {
             position: fixed; top: 10px; left: 20px; z-index: 2000;
         }
         #editable-title {
-            font-size: 28px; font-weight: bold; color: #333;
+            font-size: 14px; font-weight: bold; color: #333;
             border-bottom: 2px transparent solid; transition: 0.3s; padding: 5px;
         }
         #editable-title:hover { background: rgba(0,0,0,0.05); border-bottom: 2px solid #999; }
@@ -32,9 +32,7 @@
         /* --- 連線結構 --- */
         .tree ul { padding-top: 30px; position: relative; display: flex; justify-content: center; margin: 0; padding-inline-start: 0; }
         .tree ul::before { content: ''; position: absolute; top: 0; left: 50%; border-left: 2px solid var(--line-color); height: 30px; transform: translateX(var(--drag-offset, 0px)); z-index: 1; }
-        
         .tree > ul::before { display: none !important; }
-
         .tree ul:has(> li:only-child)::before { height: 60px; }
         .tree li { text-align: center; list-style-type: none; position: relative; padding: 30px 5px 0 5px; }
         .tree li::before, .tree li::after { content: ''; position: absolute; top: 0; right: 50%; border-top: 2px solid var(--line-color); width: 50%; height: 30px; }
@@ -50,7 +48,6 @@
         .spouse-item { position: relative; }
         .spouse-item::before { content: "♥"; position: absolute; top: 10px; left: -32px; color: var(--heart-color); z-index: 11; font-size: 28px; }
         .spouse-item::after { content: ""; position: absolute; top: 24px; left: -35px; width: 35px; height: 4px; border-top: 1px solid var(--heart-color); border-bottom: 1px solid var(--heart-color); z-index: 5; }
-
         .divorced::before { content: "×" !important; color: var(--divorced-color) !important; font-size: 32px !important; font-weight: bold !important; top: 2px !important; left: -32px !important; }
         .divorced::after { border-top: 3px dashed var(--divorced-color) !important; border-bottom: none !important; height: 0 !important; top: 24px !important; }
 
@@ -61,61 +58,37 @@
         .deceased { background-color: var(--deceased-bg) !important; color: var(--deceased-text) !important; border-color: #999 !important; }
         .deceased .name-row::after { content: " (歿)"; font-size: 11px; }
         .name-row { font-weight: bold; font-size: 15px; margin: 4px 0 10px 0; display: block; }
-        
         .card-actions { display: flex; justify-content: space-between; gap: 3px; margin-top: 5px; }
         .btn-sm { flex: 1; font-size: 11px; cursor: pointer; border: 1px solid #ccc; background: #fff; padding: 4px 0; border-radius: 4px; font-weight: bold; color: #333; text-align: center; }
         .btn-sm:hover { background: #f0f0f0; }
         .btn-direct { background-color: #e91e63 !important; color: white !important; border-color: #c2185b !important; }
-
         .not-direct-line { display: none !important; }
 
-        /* --- 編輯視窗 UI (此處已修正為不超出手機範圍) --- */
-        .admin-controls { position: fixed; top: 20px; right: 20px; z-index: 2000; display: flex; flex-direction: column; gap: 10px; align-items: flex-end; }
-        .control-group { display: flex; gap: 10px; }
-        .control-btn { padding: 10px 18px; border: none; border-radius: 5px; color: white; cursor: pointer; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        
-        .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 3000; }
-        
-        /* 修正後的 Modal 樣式 */
-        #modal { 
-            display: none; 
-            position: fixed; 
-            top: 50%; 
-            left: 50%; 
-            transform: translate(-50%, -50%); 
-            background: white; 
-            padding: 20px; 
-            border-radius: 12px; 
-            width: 90%;          /* 手機版佔寬 90% */
-            max-width: 480px;    /* 電腦版最大 480px */
-            z-index: 3001; 
-            max-height: 85vh;    /* 限制高度避免超出螢幕，並顯示捲軸 */
-            overflow-y: auto; 
-            box-sizing: border-box; /* 確保 padding 不撐開寬度 */
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3); 
+        /* --- 右上角按鈕縮小與排列 --- */
+        .admin-controls { position: fixed; top: 10px; right: 10px; z-index: 2000; display: flex; flex-direction: row; gap: 5px; }
+        .control-btn { 
+            padding: 6px 10px; border: none; border-radius: 4px; color: white; 
+            cursor: pointer; font-size: 14px; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2); 
         }
         
+        /* 編輯視窗優化 */
+        .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 3000; }
+        #modal { 
+            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+            background: white; padding: 20px; border-radius: 12px; width: 90%; max-width: 480px; 
+            z-index: 3001; max-height: 85vh; overflow-y: auto; box-sizing: border-box; box-shadow: 0 10px 30px rgba(0,0,0,0.3); 
+        }
         .inline-row { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
-        .inline-row input[type="text"] { flex: 2; min-width: 100px; }
-        .inline-row select { flex: 1; min-width: 80px; }
-        .dead-check { display: flex; align-items: center; gap: 4px; color: red; font-weight: bold; white-space: nowrap; cursor: pointer; }
-
         .input-group { margin-bottom: 10px; }
-        .input-group label { display: block; font-size: 13px; margin-bottom: 3px; font-weight: bold; color: #555; }
-        input[type="text"], input[type="date"], input[type="email"], select { width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; /* 16px 防止手機自動放大 */ }
-        textarea { width: 100%; height: 60px; padding: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 6px; resize: vertical; font-size: 16px; }
-
+        input[type="text"], input[type="date"], input[type="email"], select, textarea { width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; }
         .spouse-box { background: #f8f9fa; padding: 12px; margin-top: 10px; border-radius: 8px; border-left: 4px solid #673ab7; position: relative; }
 
         @media print {
-            @page { size: A4 portrait; margin: 10mm; }
             .no-print, .card-actions, .admin-controls, .overlay, #modal { display: none !important; }
-            body { background-color: white !important; padding: 0 !important; margin: 0 !important; overflow: visible !important; display: block !important; }
+            body { background-color: white !important; padding: 0 !important; margin: 0 !important; overflow: visible !important; }
             #zoom-outer { overflow: visible !important; padding: 0 !important; }
             #zoom-inner { transform: scale(1) !important; }
-            .tree ul { display: flex !important; flex-wrap: wrap !important; justify-content: flex-start !important; padding-top: 20px !important; }
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-            .title-container { position: static !important; margin-bottom: 20px; }
         }
     </style>
 </head>
@@ -126,16 +99,14 @@
     </div>
 
     <div class="admin-controls no-print">
-        <div class="control-group">
-            <button class="control-btn" style="background:#555;" onclick="changeZoom(-0.1)">➖</button>
-            <button class="control-btn" style="background:#555;" onclick="setZoom(1)">100%</button>
-            <button class="control-btn" style="background:#555;" onclick="changeZoom(0.1)">➕</button>
-        </div>
-        <div class="control-group">
-            <button class="control-btn" style="background:#2196f3; display:none;" onclick="resetFilter()" id="reset-btn">顯示全圖</button>
-            <button class="control-btn" style="background:#4caf50;" onclick="manualSave()">💾 儲存</button>
-            <button class="control-btn" style="background:#607d8b;" onclick="window.print()">🖨️ 列印</button>
-        </div>
+        <button class="control-btn" style="background:#2196f3; display:none;" onclick="resetFilter()" id="reset-btn">全圖</button>
+        <button class="control-btn" style="background:#8e44ad;" title="匯入檔案" onclick="document.getElementById('file-input').click()">📥</button>
+        <button class="control-btn" style="background:#e67e22;" title="匯出檔案" onclick="exportData()">📤</button>
+        <button class="control-btn" style="background:#555;" onclick="changeZoom(-0.1)">➖</button>
+        <button class="control-btn" style="background:#555;" onclick="changeZoom(0.1)">➕</button>
+        <button class="control-btn" style="background:#4caf50;" onclick="manualSave()">💾</button>
+        <button class="control-btn" style="background:#607d8b;" onclick="window.print()">🖨️</button>
+        <input type="file" id="file-input" style="display:none" accept=".json" onchange="importData(event)">
     </div>
 
     <div id="zoom-outer">
@@ -150,7 +121,7 @@
         <div class="inline-row">
             <input type="text" id="i-name" placeholder="姓名">
             <select id="i-gender"><option value="male">男性</option><option value="female">女性</option></select>
-            <label class="dead-check"><input type="checkbox" id="i-is-dead"> 歿</label>
+            <label style="color:red; font-weight:bold; cursor:pointer;"><input type="checkbox" id="i-is-dead"> 歿</label>
         </div>
         <div class="input-group"><label>生日：</label><input type="date" id="i-birth"></div>
         <div class="input-group"><label>電話：</label><input type="text" id="i-phone"></div>
@@ -173,7 +144,6 @@
     <script>
         let currentZoom = 1;
         function changeZoom(delta) { currentZoom = Math.max(0.2, Math.min(2, currentZoom + delta)); applyZoom(); }
-        function setZoom(val) { currentZoom = val; applyZoom(); }
         function applyZoom() { document.getElementById('zoom-inner').style.transform = `scale(${currentZoom})`; }
         function saveTitle() { localStorage.setItem('FamilyTree_Title', document.getElementById('editable-title').innerText); }
 
@@ -181,8 +151,44 @@
         let familyData = JSON.parse(localStorage.getItem(DB_KEY)) || {
             id: 'r1', name: "王氏始祖", gender: "male", birthday: "", isDead: false, phone: "", email: "", address: "", memo: "", spouses: [], children: []
         };
-        let activeId = null;
-        let isEditMode = false;
+        let activeId = null, isEditMode = false;
+
+        // --- 匯出功能 ---
+        function exportData() {
+            const exportObj = {
+                title: document.getElementById('editable-title').innerText,
+                data: familyData
+            };
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportObj));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", "family_tree.json");
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        }
+
+        // --- 匯入功能 ---
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (confirm("匯入將會覆蓋您目前的資料，確定嗎？")) {
+                        familyData = imported.data;
+                        document.getElementById('editable-title').innerText = imported.title || "家族脈絡系統";
+                        saveTitle();
+                        save();
+                        alert("匯入成功！");
+                    }
+                } catch (err) {
+                    alert("檔案格式錯誤，無法讀取。");
+                }
+            };
+            reader.readAsText(file);
+        }
 
         function render() {
             document.getElementById('tree-container').innerHTML = `<ul>${genHtml(familyData)}</ul>`;
@@ -217,9 +223,8 @@
             const directIds = new Set();
             let cur = id;
             while(cur) { directIds.add(cur); const p = findParent(familyData, cur); cur = p?p.id:null; }
-            const focus = find(familyData, id);
             function collect(n) { directIds.add(n.id); (n.children||[]).forEach(collect); }
-            collect(focus);
+            collect(find(familyData, id));
             document.querySelectorAll('.tree li').forEach(li => li.classList.toggle('not-direct-line', !directIds.has(li.dataset.nodeId)));
         }
 
@@ -233,17 +238,9 @@
         function addSpouseInput(s) {
             const div = document.createElement('div');
             div.className = "spouse-box";
-            div.innerHTML = `
-                <button onclick="this.parentElement.remove()" style="position:absolute; right:8px; top:8px; border:none; background:none; color:red; cursor:pointer; font-weight:bold;">✕</button>
-                <div class="inline-row" style="margin-top:10px;">
-                    <input type="text" class="sp-n" placeholder="配偶姓名" value="${s.name}">
-                    <select class="sp-g"><option value="female" ${s.gender==='female'?'selected':''}>女</option><option value="male" ${s.gender==='male'?'selected':''}>男</option></select>
-                    <label class="dead-check"><input type="checkbox" class="sp-d" ${s.isDead?'checked':''}> 歿</label>
-                </div>
-                <div style="margin-bottom:8px;"><label style="font-size:12px; color:#666;"><input type="checkbox" class="sp-div" ${s.isDivorced?'checked':''}> 離婚</label></div>
-                <div class="input-group"><label style="font-size:11px;">生日：</label><input type="date" class="sp-b" value="${s.birthday||''}"></div>
-                <div class="input-group"><label style="font-size:11px;">電話：</label><input type="text" class="sp-p" value="${s.phone||''}"></div>
-                <div class="input-group"><label style="font-size:11px;">住址：</label><input type="text" class="sp-a" value="${s.address||''}"></div>`;
+            div.innerHTML = `<button onclick="this.parentElement.remove()" style="position:absolute; right:8px; top:8px; border:none; background:none; color:red; cursor:pointer;">✕</button>
+                <div class="inline-row" style="margin-top:10px;"><input type="text" class="sp-n" placeholder="姓名" value="${s.name}"><select class="sp-g"><option value="female" ${s.gender==='female'?'selected':''}>女</option><option value="male" ${s.gender==='male'?'selected':''}>男</option></select><label><input type="checkbox" class="sp-d" ${s.isDead?'checked':''}> 歿</label></div>
+                <div style="margin-bottom:8px;"><label><input type="checkbox" class="sp-div" ${s.isDivorced?'checked':''}> 離婚</label></div>`;
             document.getElementById('spouse-area').appendChild(div);
         }
 
@@ -257,8 +254,7 @@
                 document.getElementById('i-name').value = m.name; document.getElementById('i-gender').value = m.gender;
                 document.getElementById('i-birth').value = m.birthday||""; document.getElementById('i-phone').value = m.phone||"";
                 document.getElementById('i-email').value = m.email||""; document.getElementById('i-address').value = m.address||"";
-                document.getElementById('i-memo').value = m.memo||"";
-                document.getElementById('i-is-dead').checked = m.isDead;
+                document.getElementById('i-memo').value = m.memo||""; document.getElementById('i-is-dead').checked = m.isDead;
                 (m.spouses || []).forEach(addSpouseInput);
             } else {
                 ['i-name','i-birth','i-phone','i-email','i-address','i-memo'].forEach(v=>document.getElementById(v).value="");
@@ -272,12 +268,10 @@
                 name: document.getElementById('i-name').value, gender: document.getElementById('i-gender').value,
                 birthday: document.getElementById('i-birth').value, phone: document.getElementById('i-phone').value,
                 email: document.getElementById('i-email').value, address: document.getElementById('i-address').value,
-                memo: document.getElementById('i-memo').value,
-                isDead: document.getElementById('i-is-dead').checked,
+                memo: document.getElementById('i-memo').value, isDead: document.getElementById('i-is-dead').checked,
                 spouses: Array.from(document.querySelectorAll('.spouse-box')).map(row => ({
                     name: row.querySelector('.sp-n').value, gender: row.querySelector('.sp-g').value,
-                    isDead: row.querySelector('.sp-d').checked, isDivorced: row.querySelector('.sp-div').checked,
-                    birthday: row.querySelector('.sp-b').value, phone: row.querySelector('.sp-p').value, address: row.querySelector('.sp-a').value
+                    isDead: row.querySelector('.sp-d').checked, isDivorced: row.querySelector('.sp-div').checked
                 })).filter(s => s.name)
             };
             if (isEditMode) Object.assign(find(familyData, activeId), data);
@@ -295,8 +289,11 @@
                     if (sId && sId !== tId && sId !== 'r1') {
                         const sP = findParent(familyData, sId), tP = findParent(familyData, tId);
                         if (sP && tP && sP.id === tP.id) {
-                            const c = sP.children, sIdx = c.findIndex(x => x.id === sId), tIdx = c.findIndex(x => x.id === tId);
-                            const [item] = c.splice(sIdx, 1); c.splice(tIdx, 0, item);
+                            const children = sP.children;
+                            const sIdx = children.findIndex(x => x.id === sId);
+                            const tIdx = children.findIndex(x => x.id === tId);
+                            const [movedItem] = children.splice(sIdx, 1);
+                            children.splice(tIdx, 0, movedItem);
                         } else {
                             const mov = findAndRemove(familyData, sId), tar = find(familyData, tId);
                             if(mov && tar) tar.children.push(mov);
@@ -317,7 +314,6 @@
 
         const savedTitle = localStorage.getItem('FamilyTree_Title');
         if (savedTitle) document.getElementById('editable-title').innerText = savedTitle;
-
         render();
     </script>
 </body>
