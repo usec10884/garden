@@ -17,7 +17,6 @@
 
         body { font-family: "Microsoft JhengHei", sans-serif; background-color: #f0f2f5; padding: 0; margin: 0; overflow: auto; }
 
-        /* 標題縮小 1/2 (28px -> 14px) */
         .title-container {
             position: fixed; top: 10px; left: 20px; z-index: 2000;
         }
@@ -65,17 +64,17 @@
         .btn-direct { background-color: #e91e63 !important; color: white !important; border-color: #c2185b !important; }
         .not-direct-line { display: none !important; }
 
-        /* --- 右上角按鈕縮小與排列 --- */
+        /* --- 控制列 --- */
         .admin-controls { position: fixed; top: 10px; right: 10px; z-index: 2000; display: flex; flex-direction: row; gap: 5px; }
         .control-btn { 
-            padding: 6px 10px; border: none; border-radius: 4px; color: white; 
-            cursor: pointer; font-size: 14px; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2); 
+            padding: 8px 12px; border: none; border-radius: 4px; color: white; 
+            cursor: pointer; font-size: 16px; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2); 
         }
         
-        /* 截圖模式下隱藏按鈕 */
+        /* 截圖模式下隱藏控制 UI */
         .is-exporting .no-print { display: none !important; }
 
-        /* 編輯視窗優化 */
+        /* 編輯視窗 */
         .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 3000; }
         #modal { 
             display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
@@ -86,14 +85,6 @@
         .input-group { margin-bottom: 10px; }
         input[type="text"], input[type="date"], input[type="email"], select, textarea { width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; }
         .spouse-box { background: #f8f9fa; padding: 12px; margin-top: 10px; border-radius: 8px; border-left: 4px solid #673ab7; position: relative; }
-
-        @media print {
-            .no-print, .card-actions, .admin-controls, .overlay, #modal { display: none !important; }
-            body { background-color: white !important; padding: 0 !important; margin: 0 !important; overflow: visible !important; }
-            #zoom-outer { overflow: visible !important; padding: 0 !important; }
-            #zoom-inner { transform: scale(1) !important; }
-            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-        }
     </style>
 </head>
 <body id="main-body">
@@ -107,10 +98,9 @@
         <button class="control-btn" style="background:#8e44ad;" title="匯入檔案" onclick="document.getElementById('file-input').click()">📥</button>
         <button class="control-btn" style="background:#e67e22;" title="匯出檔案" onclick="exportData()">📤</button>
         <button class="control-btn" style="background:#27ae60;" title="輸出 JPG 圖片" onclick="exportFullJPG()">📸</button>
-        <button class="control-btn" style="background:#555;" onclick="changeZoom(-0.1)">➖</button>
-        <button class="control-btn" style="background:#555;" onclick="changeZoom(0.1)">➕</button>
-        <button class="control-btn" style="background:#4caf50;" onclick="manualSave()">💾</button>
-        <button class="control-btn" style="background:#607d8b;" onclick="window.print()">🖨️</button>
+        <button class="control-btn" style="background:#f44336;" title="縮小" onclick="changeZoom(-0.1)">➖</button>
+        <button class="control-btn" style="background:#2196f3;" title="放大" onclick="changeZoom(0.1)">➕</button>
+        <button class="control-btn" style="background:#4caf50;" title="儲存" onclick="manualSave()">💾</button>
         <input type="file" id="file-input" style="display:none" accept=".json" onchange="importData(event)">
     </div>
 
@@ -158,15 +148,9 @@
         };
         let activeId = null, isEditMode = false;
 
-        // --- 全區 JPG 輸出功能 (手機支援) ---
         async function exportFullJPG() {
             const inner = document.getElementById('zoom-inner');
-            const outer = document.getElementById('zoom-outer');
-            
-            // 進入輸出模式
             document.body.classList.add('is-exporting');
-            
-            // 暫時重設縮放，確保截圖完整且清晰
             const prevZoom = currentZoom;
             currentZoom = 1;
             applyZoom();
@@ -175,44 +159,32 @@
                 const canvas = await html2canvas(inner, {
                     backgroundColor: "#f0f2f5",
                     useCORS: true,
-                    scale: 2 // 提升清晰度
+                    scale: 2 
                 });
-
                 const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
                 const link = document.createElement('a');
                 link.href = dataUrl;
                 link.download = `家族脈絡圖_${new Date().getTime()}.jpg`;
-                document.body.appendChild(link);
                 link.click();
-                document.body.removeChild(link);
-                
-                alert("JPG 圖片已生成並嘗試下載。\n若是手機版未自動下載，請長按圖片儲存。");
             } catch (e) {
-                alert("圖片輸出失敗，請稍後再試。");
+                alert("圖片輸出失敗");
             } finally {
-                // 恢復縮放與 UI
                 currentZoom = prevZoom;
                 applyZoom();
                 document.body.classList.remove('is-exporting');
             }
         }
 
-        // --- 匯出功能 ---
         function exportData() {
-            const exportObj = {
-                title: document.getElementById('editable-title').innerText,
-                data: familyData
-            };
+            const exportObj = { title: document.getElementById('editable-title').innerText, data: familyData };
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportObj));
             const downloadAnchorNode = document.createElement('a');
             downloadAnchorNode.setAttribute("href", dataStr);
             downloadAnchorNode.setAttribute("download", "family_tree.json");
-            document.body.appendChild(downloadAnchorNode);
             downloadAnchorNode.click();
             downloadAnchorNode.remove();
         }
 
-        // --- 匯入功能 ---
         function importData(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -223,13 +195,9 @@
                     if (confirm("匯入將會覆蓋您目前的資料，確定嗎？")) {
                         familyData = imported.data;
                         document.getElementById('editable-title').innerText = imported.title || "家族脈絡系統";
-                        saveTitle();
-                        save();
-                        alert("匯入成功！");
+                        saveTitle(); save(); alert("匯入成功！");
                     }
-                } catch (err) {
-                    alert("檔案格式錯誤，無法讀取。");
-                }
+                } catch (err) { alert("檔案格式錯誤"); }
             };
             reader.readAsText(file);
         }
@@ -276,7 +244,7 @@
 
         function handleAddSpouseClick() {
             const g = document.getElementById('i-gender').value === 'male' ? 'female' : 'male';
-            addSpouseInput({ name: '', gender: g, isDead: false, isDivorced: false, birthday: "", phone: "", address: "" });
+            addSpouseInput({ name: '', gender: g, isDead: false, isDivorced: false });
         }
 
         function addSpouseInput(s) {
@@ -331,17 +299,8 @@
                     e.preventDefault();
                     const sId = e.dataTransfer.getData("text"), tId = card.dataset.id;
                     if (sId && sId !== tId && sId !== 'r1') {
-                        const sP = findParent(familyData, sId), tP = findParent(familyData, tId);
-                        if (sP && tP && sP.id === tP.id) {
-                            const children = sP.children;
-                            const sIdx = children.findIndex(x => x.id === sId);
-                            const tIdx = children.findIndex(x => x.id === tId);
-                            const [movedItem] = children.splice(sIdx, 1);
-                            children.splice(tIdx, 0, movedItem);
-                        } else {
-                            const mov = findAndRemove(familyData, sId), tar = find(familyData, tId);
-                            if(mov && tar) tar.children.push(mov);
-                        }
+                        const mov = findAndRemove(familyData, sId), tar = find(familyData, tId);
+                        if(mov && tar) tar.children.push(mov);
                         save();
                     }
                 };
