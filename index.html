@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>家族脈絡系統 - 專業完整版</title>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
         :root {
             --male-bg: #e3f2fd; --male-border: #2196f3;
@@ -27,7 +28,7 @@
         #editable-title:hover { background: rgba(0,0,0,0.05); border-bottom: 2px solid #999; }
 
         #zoom-outer { width: 100%; height: 100vh; overflow: auto; padding: 80px 50px 50px 50px; box-sizing: border-box; }
-        #zoom-inner { transform-origin: top center; transition: transform 0.2s ease-out; }
+        #zoom-inner { transform-origin: top center; transition: transform 0.2s ease-out; display: inline-block; min-width: 100%; }
 
         /* --- 連線結構 --- */
         .tree ul { padding-top: 30px; position: relative; display: flex; justify-content: center; margin: 0; padding-inline-start: 0; }
@@ -71,6 +72,9 @@
             cursor: pointer; font-size: 14px; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2); 
         }
         
+        /* 截圖模式下隱藏按鈕 */
+        .is-exporting .no-print { display: none !important; }
+
         /* 編輯視窗優化 */
         .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 3000; }
         #modal { 
@@ -102,6 +106,7 @@
         <button class="control-btn" style="background:#2196f3; display:none;" onclick="resetFilter()" id="reset-btn">全圖</button>
         <button class="control-btn" style="background:#8e44ad;" title="匯入檔案" onclick="document.getElementById('file-input').click()">📥</button>
         <button class="control-btn" style="background:#e67e22;" title="匯出檔案" onclick="exportData()">📤</button>
+        <button class="control-btn" style="background:#27ae60;" title="輸出 JPG 圖片" onclick="exportFullJPG()">📸</button>
         <button class="control-btn" style="background:#555;" onclick="changeZoom(-0.1)">➖</button>
         <button class="control-btn" style="background:#555;" onclick="changeZoom(0.1)">➕</button>
         <button class="control-btn" style="background:#4caf50;" onclick="manualSave()">💾</button>
@@ -152,6 +157,45 @@
             id: 'r1', name: "王氏始祖", gender: "male", birthday: "", isDead: false, phone: "", email: "", address: "", memo: "", spouses: [], children: []
         };
         let activeId = null, isEditMode = false;
+
+        // --- 全區 JPG 輸出功能 (手機支援) ---
+        async function exportFullJPG() {
+            const inner = document.getElementById('zoom-inner');
+            const outer = document.getElementById('zoom-outer');
+            
+            // 進入輸出模式
+            document.body.classList.add('is-exporting');
+            
+            // 暫時重設縮放，確保截圖完整且清晰
+            const prevZoom = currentZoom;
+            currentZoom = 1;
+            applyZoom();
+
+            try {
+                const canvas = await html2canvas(inner, {
+                    backgroundColor: "#f0f2f5",
+                    useCORS: true,
+                    scale: 2 // 提升清晰度
+                });
+
+                const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
+                const link = document.createElement('a');
+                link.href = dataUrl;
+                link.download = `家族脈絡圖_${new Date().getTime()}.jpg`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                alert("JPG 圖片已生成並嘗試下載。\n若是手機版未自動下載，請長按圖片儲存。");
+            } catch (e) {
+                alert("圖片輸出失敗，請稍後再試。");
+            } finally {
+                // 恢復縮放與 UI
+                currentZoom = prevZoom;
+                applyZoom();
+                document.body.classList.remove('is-exporting');
+            }
+        }
 
         // --- 匯出功能 ---
         function exportData() {
