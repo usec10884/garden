@@ -3,14 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>家族脈絡系統 - 配偶資料加強版</title>
+    <title>家族脈絡系統 - 專業版</title>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
         :root {
             --male-bg: #e3f2fd; --male-border: #2196f3;
             --female-bg: #fff3e0; --female-border: #ff9800;
-            --deceased-bg: #eeeeee; --deceased-text: #888;
-            --line-color: #999; --card-width: 155px;
+            --line-color: #999; --card-width: 165px;
             --heart-color: #ff0000;
             --divorced-color: #d32f2f;
         }
@@ -51,30 +50,39 @@
             box-shadow: 0 3px 6px rgba(0,0,0,0.1); background: white; cursor: grab; position: relative; z-index: 10;
             display: flex; align-items: center; gap: 8px;
         }
+
+        .gen-label {
+            position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+            background: #333; color: white; font-size: 10px; padding: 2px 6px; border-radius: 4px;
+            white-space: nowrap; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
         .photo-box {
             width: 45px; height: 45px; border-radius: 50%; background: #eee; flex-shrink: 0;
             overflow: hidden; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; font-size: 20px;
         }
         .photo-box img { width: 100%; height: 100%; object-fit: cover; }
-        .card-info { flex-grow: 1; text-align: left; overflow: hidden; }
+        .card-info { flex-grow: 1; text-align: left; overflow: hidden; display: flex; flex-direction: column; }
 
         .male { background-color: var(--male-bg); border-color: var(--male-border); }
         .female { background-color: var(--female-bg); border-color: var(--female-border); }
-        .deceased { background-color: var(--deceased-bg) !important; color: var(--deceased-text) !important; border-color: #999 !important; }
-        .deceased .name-row::after { content: " (歿)"; font-size: 11px; }
-        .name-row { font-weight: bold; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+        
+        /* 修正：過世者不改灰色背景，僅保留(歿)文字與紅字提示 */
+        .deceased .name-row::after { content: " (歿)"; font-size: 11px; color: #d32f2f; }
+        
+        .name-row { font-weight: bold; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .ename-row { font-size: 11px; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: -2px; }
+        
         .card-actions { display: flex; justify-content: space-between; gap: 2px; margin-top: 5px; }
-        .btn-sm { flex: 1; font-size: 9px; cursor: pointer; border: 1px solid #ccc; background: #fff; padding: 2px 0; border-radius: 3px; font-weight: bold; color: #333; text-align: center; }
-        .btn-sm:hover { background: #f0f0f0; }
+        .btn-sm { flex: 1; font-size: 9px; cursor: pointer; border: 1px solid #ccc; background: rgba(255,255,255,0.7); padding: 2px 0; border-radius: 3px; font-weight: bold; color: #333; text-align: center; }
+        .btn-sm:hover { background: #fff; }
         .btn-direct { background-color: #e91e63 !important; color: white !important; border-color: #c2185b !important; }
         .not-direct-line { display: none !important; }
 
-        /* --- 控制按鈕 --- */
         .admin-controls { position: fixed; top: 10px; right: 10px; z-index: 2000; display: flex; flex-direction: row; gap: 5px; }
         .control-btn { padding: 6px 10px; border: none; border-radius: 4px; color: white; cursor: pointer; font-size: 14px; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         .is-exporting .card-actions, .is-exporting .admin-controls { visibility: hidden !important; }
 
-        /* 編輯視窗 */
         .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 3000; }
         #modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 12px; width: 95%; max-width: 500px; z-index: 3001; max-height: 90vh; overflow-y: auto; box-sizing: border-box; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
         .inline-row { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
@@ -82,7 +90,6 @@
         .input-group label { display: block; font-size: 12px; color: #666; margin-bottom: 3px; }
         input[type="text"], input[type="date"], select, textarea { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
         
-        /* 配偶編輯盒 */
         .spouse-box { background: #f8f9fa; padding: 15px; margin-top: 10px; border-radius: 8px; border-left: 5px solid #673ab7; position: relative; box-shadow: inset 0 0 5px rgba(0,0,0,0.05); }
         .spouse-box h4 { margin: 0 0 10px 0; font-size: 14px; color: #673ab7; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -125,7 +132,11 @@
         </div>
 
         <div class="inline-row">
-            <div style="flex:2;"><label>姓名</label><input type="text" id="i-name" placeholder="姓名"></div>
+            <div style="flex:2;"><label>姓名</label><input type="text" id="i-name" placeholder="中文名"></div>
+            <div style="flex:2;"><label>英文姓名</label><input type="text" id="i-ename" placeholder="English Name"></div>
+        </div>
+
+        <div class="inline-row">
             <div style="flex:1;"><label>性別</label><select id="i-gender"><option value="male">男性</option><option value="female">女性</option></select></div>
             <div style="padding-top:20px;"><label style="color:red; font-weight:bold;"><input type="checkbox" id="i-is-dead"> 歿</label></div>
         </div>
@@ -153,9 +164,9 @@
         function applyZoom() { document.getElementById('zoom-inner').style.transform = `scale(${currentZoom})`; }
         function saveTitle() { localStorage.setItem('FamilyTree_Title', document.getElementById('editable-title').innerText); }
 
-        const DB_KEY = 'FamilyTree_V5_Data';
+        const DB_KEY = 'FamilyTree_V5_Data_EN';
         let familyData = JSON.parse(localStorage.getItem(DB_KEY)) || {
-            id: 'r1', name: "第一代", gender: "male", birthday: "", photo: "", isDead: false, phone: "", email: "", address: "", memo: "", spouses: [], children: []
+            id: 'r1', name: "1世 第一代", ename: "Founder", gender: "male", birthday: "", photo: "", isDead: false, phone: "", email: "", address: "", memo: "", spouses: [], children: []
         };
         let activeId = null, isEditMode = false;
 
@@ -193,11 +204,13 @@
         }
 
         function render() {
-            document.getElementById('tree-container').innerHTML = `<ul>${genHtml(familyData)}</ul>`;
+            const match = familyData.name.match(/(\d+)世/);
+            const startGen = match ? parseInt(match[1]) : 1;
+            document.getElementById('tree-container').innerHTML = `<ul>${genHtml(familyData, startGen)}</ul>`;
             initDragEvents();
         }
 
-        function genHtml(m) {
+        function genHtml(m, gen) {
             const hasSpouse = m.spouses && m.spouses.length > 0;
             const deadClass = m.isDead ? 'deceased' : '';
             const offsetStyle = hasSpouse ? `style="--drag-offset: calc( (var(--card-width) / -2) - 17.5px );"` : `style="--drag-offset: 0px;"`;
@@ -207,16 +220,21 @@
                 <div class="spouse-item ${s.isDivorced ? 'divorced' : ''}">
                     <div class="member-card ${s.gender} ${s.isDead ? 'deceased' : ''}">
                         <div class="photo-box">${s.photo ? `<img src="${s.photo}">` : '👤'}</div>
-                        <div class="card-info"><span class="name-row">${s.name}</span></div>
+                        <div class="card-info">
+                            <span class="name-row">${s.name}</span>
+                            <span class="ename-row">${s.ename || ''}</span>
+                        </div>
                     </div>
                 </div>`).join('');
 
             return `<li id="li-${m.id}" data-node-id="${m.id}">
                 <div class="node-container">
                     <div class="member-card ${m.gender} ${deadClass}" draggable="true" data-id="${m.id}">
+                        <div class="gen-label">${gen}世</div>
                         ${photoPart}
                         <div class="card-info">
                             <span class="name-row">${m.name}</span>
+                            <span class="ename-row">${m.ename || ''}</span>
                             <div class="card-actions">
                                 <div class="btn-sm" onclick="openModal(event, '${m.id}', true)">編輯</div>
                                 <div class="btn-sm" onclick="openModal(event, '${m.id}', false)">子女</div>
@@ -224,7 +242,7 @@
                             </div>
                         </div>
                     </div>${hasSpouse ? `<div class="spouse-list">${spouseHtml}</div>` : ''}
-                </div>${m.children && m.children.length > 0 ? `<ul ${offsetStyle}>${m.children.map(c => genHtml(c)).join('')}</ul>` : ''}</li>`;
+                </div>${m.children && m.children.length > 0 ? `<ul ${offsetStyle}>${m.children.map(c => genHtml(c, gen + 1)).join('')}</ul>` : ''}</li>`;
         }
 
         function toggleDirectMode(id) {
@@ -261,6 +279,7 @@
             
             if(edit) {
                 document.getElementById('i-name').value = m.name || ""; 
+                document.getElementById('i-ename').value = m.ename || ""; 
                 document.getElementById('i-gender').value = m.gender || "male";
                 document.getElementById('i-birth').value = m.birthday || ""; 
                 document.getElementById('i-is-dead').checked = m.isDead || false;
@@ -272,7 +291,7 @@
                 document.getElementById('i-photo-preview').innerHTML = m.photo ? `<img src="${m.photo}">` : '👤';
                 (m.spouses || []).forEach(addSpouseInput);
             } else {
-                ['i-name','i-birth','i-phone','i-email','i-address','i-memo','i-photo-base64'].forEach(v=>document.getElementById(v).value="");
+                ['i-name','i-ename','i-birth','i-phone','i-email','i-address','i-memo','i-photo-base64'].forEach(v=>document.getElementById(v).value="");
                 document.getElementById('i-photo-preview').innerHTML = '👤';
             }
             document.getElementById('overlay').style.display = 'block'; document.getElementById('modal').style.display = 'block';
@@ -293,25 +312,27 @@
                 </div>
                 <div class="inline-row">
                     <div style="flex:2;"><label>配偶姓名</label><input type="text" class="sp-n" value="${s.name||''}"></div>
+                    <div style="flex:2;"><label>英文名</label><input type="text" class="sp-en" value="${s.ename||''}"></div>
+                </div>
+                <div class="inline-row">
                     <div style="flex:1;"><label>性別</label><select class="sp-g"><option value="female" ${s.gender==='female'?'selected':''}>女</option><option value="male" ${s.gender==='male'?'selected':''}>男</option></select></div>
+                    <div style="flex:1; padding-top:15px;">
+                        <label style="margin-right:15px;"><input type="checkbox" class="sp-d" ${s.isDead?'checked':''}> 歿</label>
+                        <label><input type="checkbox" class="sp-div" ${s.isDivorced?'checked':''}> 離婚</label>
+                    </div>
                 </div>
                 <div class="grid-2">
                     <div class="input-group"><label>生日</label><input type="date" class="sp-b" value="${s.birthday||''}"></div>
                     <div class="input-group"><label>電話</label><input type="text" class="sp-ph" value="${s.phone||''}"></div>
                 </div>
-                <div class="input-group"><label>Email</label><input type="text" class="sp-em" value="${s.email||''}"></div>
-                <div class="input-group"><label>住址</label><input type="text" class="sp-ad" value="${s.address||''}"></div>
-                <div class="input-group"><label>備註</label><textarea class="sp-me" rows="1">${s.memo||''}</textarea></div>
-                <div style="margin-top:5px;">
-                    <label style="margin-right:15px;"><input type="checkbox" class="sp-d" ${s.isDead?'checked':''}> 歿</label>
-                    <label><input type="checkbox" class="sp-div" ${s.isDivorced?'checked':''}> 離婚</label>
-                </div>`;
+                <div class="input-group"><label>備註</label><textarea class="sp-me" rows="1">${s.memo||''}</textarea></div>`;
             document.getElementById('spouse-area').appendChild(div);
         }
 
         function saveData() {
             const data = {
                 name: document.getElementById('i-name').value, 
+                ename: document.getElementById('i-ename').value, 
                 gender: document.getElementById('i-gender').value,
                 birthday: document.getElementById('i-birth').value, 
                 isDead: document.getElementById('i-is-dead').checked,
@@ -322,11 +343,10 @@
                 photo: document.getElementById('i-photo-base64').value,
                 spouses: Array.from(document.querySelectorAll('.spouse-box')).map(b => ({
                     name: b.querySelector('.sp-n').value, 
+                    ename: b.querySelector('.sp-en').value, 
                     gender: b.querySelector('.sp-g').value,
                     birthday: b.querySelector('.sp-b').value,
                     phone: b.querySelector('.sp-ph').value,
-                    email: b.querySelector('.sp-em').value,
-                    address: b.querySelector('.sp-ad').value,
                     memo: b.querySelector('.sp-me').value,
                     isDead: b.querySelector('.sp-d').checked, 
                     isDivorced: b.querySelector('.sp-div').checked,
