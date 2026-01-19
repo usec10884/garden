@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>家族脈絡系統 - 專業版</title>
+    <title>家族脈絡系統 - 搜尋定位版</title>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
         :root {
@@ -12,6 +12,7 @@
             --line-color: #999; --card-width: 165px;
             --heart-color: #ff0000;
             --divorced-color: #d32f2f;
+            --search-highlight: #ffeb3b;
         }
 
         body { font-family: "Microsoft JhengHei", sans-serif; background-color: #f0f2f5; padding: 0; margin: 0; overflow: auto; }
@@ -48,7 +49,14 @@
         .member-card { 
             width: var(--card-width); padding: 10px; border-radius: 8px; border: 2px solid #ccc; 
             box-shadow: 0 3px 6px rgba(0,0,0,0.1); background: white; cursor: grab; position: relative; z-index: 10;
-            display: flex; align-items: center; gap: 8px;
+            display: flex; align-items: center; gap: 8px; transition: all 0.3s ease;
+        }
+
+        /* 搜尋命中樣式 */
+        .search-hit {
+            border: 3px solid var(--search-highlight) !important;
+            box-shadow: 0 0 15px var(--search-highlight) !important;
+            transform: scale(1.05);
         }
 
         .gen-label {
@@ -67,7 +75,6 @@
         .male { background-color: var(--male-bg); border-color: var(--male-border); }
         .female { background-color: var(--female-bg); border-color: var(--female-border); }
         
-        /* 修正：過世者不改灰色背景，僅保留(歿)文字與紅字提示 */
         .deceased .name-row::after { content: " (歿)"; font-size: 11px; color: #d32f2f; }
         
         .name-row { font-weight: bold; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -79,7 +86,8 @@
         .btn-direct { background-color: #e91e63 !important; color: white !important; border-color: #c2185b !important; }
         .not-direct-line { display: none !important; }
 
-        .admin-controls { position: fixed; top: 10px; right: 10px; z-index: 2000; display: flex; flex-direction: row; gap: 5px; }
+        .admin-controls { position: fixed; top: 10px; right: 10px; z-index: 2000; display: flex; flex-direction: row; gap: 5px; align-items: center; }
+        .search-box { padding: 6px; border-radius: 4px; border: 1px solid #ccc; font-size: 14px; width: 120px; outline: none; }
         .control-btn { padding: 6px 10px; border: none; border-radius: 4px; color: white; cursor: pointer; font-size: 14px; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         .is-exporting .card-actions, .is-exporting .admin-controls { visibility: hidden !important; }
 
@@ -102,6 +110,8 @@
     </div>
 
     <div class="admin-controls">
+        <input type="text" class="search-box" id="search-input" placeholder="搜尋姓名..." oninput="searchName()">
+        
         <button class="control-btn" style="background:#2196f3; display:none;" onclick="resetFilter()" id="reset-btn">全圖</button>
         <button class="control-btn" style="background:#8e44ad;" title="匯入" onclick="document.getElementById('file-input').click()">📥</button>
         <button class="control-btn" style="background:#e67e22;" title="匯出" onclick="exportData()">📤</button>
@@ -169,6 +179,45 @@
             id: 'r1', name: "1世 第一代", ename: "Founder", gender: "male", birthday: "", photo: "", isDead: false, phone: "", email: "", address: "", memo: "", spouses: [], children: []
         };
         let activeId = null, isEditMode = false;
+
+        // --- 搜尋與自動回彈功能 ---
+        function searchName() {
+            const keyword = document.getElementById('search-input').value.trim().toLowerCase();
+            const cards = document.querySelectorAll('.member-card');
+            
+            // 1. 如果搜尋框是空的，清除高亮並回彈到起始位置
+            if (!keyword) {
+                cards.forEach(card => card.classList.remove('search-hit'));
+                // 回到起始位置（頂部中心）
+                document.getElementById('zoom-outer').scrollTo({
+                    top: 0,
+                    left: document.getElementById('zoom-inner').offsetWidth / 2 - window.innerWidth / 2,
+                    behavior: 'smooth'
+                });
+                return;
+            }
+
+            // 2. 執行搜尋高亮
+            let firstMatch = null;
+            cards.forEach(card => {
+                const nameNode = card.querySelector('.name-row');
+                const enameNode = card.querySelector('.ename-row');
+                const name = nameNode ? nameNode.innerText.toLowerCase() : "";
+                const ename = enameNode ? enameNode.innerText.toLowerCase() : "";
+                
+                if (name.includes(keyword) || ename.includes(keyword)) {
+                    card.classList.add('search-hit');
+                    if (!firstMatch) firstMatch = card;
+                } else {
+                    card.classList.remove('search-hit');
+                }
+            });
+
+            // 3. 自動定位到目標
+            if (firstMatch) {
+                firstMatch.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+            }
+        }
 
         async function exportFullJPG() {
             const inner = document.getElementById('zoom-inner');
