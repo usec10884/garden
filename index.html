@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>家族脈絡系統 - 搜尋定位版</title>
-    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
         :root {
             --male-bg: #e3f2fd; --male-border: #2196f3;
@@ -89,7 +88,6 @@
         .admin-controls { position: fixed; top: 10px; right: 10px; z-index: 2000; display: flex; flex-direction: row; gap: 5px; align-items: center; }
         .search-box { padding: 6px; border-radius: 4px; border: 1px solid #ccc; font-size: 14px; width: 120px; outline: none; }
         .control-btn { padding: 6px 10px; border: none; border-radius: 4px; color: white; cursor: pointer; font-size: 14px; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        .is-exporting .card-actions, .is-exporting .admin-controls { visibility: hidden !important; }
 
         .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 3000; }
         #modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 12px; width: 95%; max-width: 500px; z-index: 3001; max-height: 90vh; overflow-y: auto; box-sizing: border-box; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
@@ -115,7 +113,6 @@
         <button class="control-btn" style="background:#2196f3; display:none;" onclick="resetFilter()" id="reset-btn">全圖</button>
         <button class="control-btn" style="background:#8e44ad;" title="匯入" onclick="document.getElementById('file-input').click()">📥</button>
         <button class="control-btn" style="background:#e67e22;" title="匯出" onclick="exportData()">📤</button>
-        <button class="control-btn" style="background:#27ae60;" title="輸出圖片" onclick="exportFullJPG()">📸</button>
         <button class="control-btn" style="background:#f44336;" title="縮小" onclick="changeZoom(-0.1)">➖</button>
         <button class="control-btn" style="background:#2196f3;" title="放大" onclick="changeZoom(0.1)">➕</button>
         <button class="control-btn" style="background:#4caf50;" title="儲存" onclick="manualSave()">💾</button>
@@ -216,23 +213,6 @@
             // 3. 自動定位到目標
             if (firstMatch) {
                 firstMatch.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
-            }
-        }
-
-        async function exportFullJPG() {
-            const inner = document.getElementById('zoom-inner');
-            document.body.classList.add('is-exporting');
-            const prevZoom = currentZoom;
-            currentZoom = 1; applyZoom();
-            try {
-                const canvas = await html2canvas(inner, { backgroundColor: "#f0f2f5", useCORS: true, scale: 2 });
-                const link = document.createElement('a');
-                link.href = canvas.toDataURL("image/jpeg", 0.9);
-                link.download = `家族圖譜_${Date.now()}.jpg`;
-                link.click();
-            } catch (e) { alert("輸出失敗"); } finally {
-                currentZoom = prevZoom; applyZoom();
-                document.body.classList.remove('is-exporting');
             }
         }
 
